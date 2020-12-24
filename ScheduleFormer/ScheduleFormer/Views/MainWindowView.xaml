@@ -12,54 +12,26 @@
     </Window.DataContext>
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition/>
             <RowDefinition/>
             <RowDefinition/>
             <RowDefinition/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Button Content="Add"
-                Command="{Binding AddCommand}"></Button>
-        
-        <Button Content="create"
-                Command="{Binding CreateScheduleCommand}"
-                Grid.Row="1"></Button>
-        <!--<ItemsControl x:Name="MondayControl"
-                      Grid.Row="0"
-                      ItemsSource="{Binding Schedule}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <ItemsControl Grid.Row="0"
-                                  ItemsSource="{Binding GroupSchedules}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <ItemsControl Grid.Row="0"
-                                              ItemsSource="{Binding GroupSchedules}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>-->
+        <StackPanel Orientation="Horizontal"
+                    Grid.Row="0">
+            <Button Content="Add"
+                    Margin="5"
+                    Command="{Binding AddCommand}"></Button>
+            <Button Content="Create"
+                    Margin="5"
+                    Command="{Binding CreateScheduleCommand}"
+                    Grid.Row="1"></Button>
+        </StackPanel>
+
+        <!--<ListView Name="MondayView"
+                  Grid.Row="1"
+                  ItemsSource="{Binding Monday}"></ListView>-->
     </Grid>
 </Window>

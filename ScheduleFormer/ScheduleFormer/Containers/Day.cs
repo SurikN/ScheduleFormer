@@ -36,8 +36,14 @@ namespace ScheduleFormer.Containers
 
         public LectureTimes FirstSpareFreeTime(Day day)
         {
-            return FreeTimes.Intersect(day.FreeTimes).FirstOrDefault();
+            return SpareFreeTime(day).FirstOrDefault();
         }
+
+        public IEnumerable<LectureTimes> SpareFreeTime(Day day)
+        {
+            return FreeTimes.Intersect(day.FreeTimes);
+        }
+
 
         public override bool Equals(object obj)
         {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting.Lifetime;
@@ -19,7 +20,7 @@ namespace ScheduleFormer.Structures
         public Dictionary<string, GroupSchedule> GroupSchedules { get; set; } = new Dictionary<string, GroupSchedule>();
 
         private Dictionary<string, TeacherSchedule> _teacherSchedules = new Dictionary<string, TeacherSchedule>();
-
+        
         public GlobalSchedule(IEnumerable<Group> groups, IEnumerable<Teacher> teachers)
         {
             foreach (var group in groups)
@@ -38,28 +39,34 @@ namespace ScheduleFormer.Structures
             var groupFreeTimes = GroupSchedules[audience.Name].GetFreeTimes();
             var teacherFreeTimes = _teacherSchedules[lecturer.Name].GetFreeTimes();
 
-            var freeDays = groupFreeTimes.Where(a => teacherFreeTimes.ContainsKey(a.Key));
-            Days day = Days.Monday;
-            LectureTimes time = LectureTimes.First;
-            bool isSuccess = false;
-            foreach (var freeDay in freeDays)
-            {
-                var e = groupFreeTimes[freeDay.Key].FreeTimes.Intersect(teacherFreeTimes[freeDay.Key].FreeTimes);
-                if (!e.Any()) continue;
-                time = e.First();
-                day = freeDay.Key;
-                isSuccess = true;
-                break;
-            }
+            var day = SelectDay(groupFreeTimes, teacherFreeTimes);
+            var time = groupFreeTimes[day].FirstSpareFreeTime(teacherFreeTimes[day]);
+            AddLecture(name, audience, lecturer, day, time);
 
-            if (isSuccess)
-            {
-                AddLecture(name, audience, lecturer, day, time);
-            }
-            else
-            {
-                throw new Exception();
-            }
+
+            //var freeDays = groupFreeTimes.Where(a => teacherFreeTimes.ContainsKey(a.Key));
+
+            //Days day = Days.Monday;
+            //LectureTimes time = LectureTimes.First;
+            //bool isSuccess = false;
+            //foreach (var freeDay in freeDays)
+            //{
+            //    var e = groupFreeTimes[freeDay.Key].FreeTimes.Intersect(teacherFreeTimes[freeDay.Key].FreeTimes);
+            //    if (!e.Any()) continue;
+            //    time = e.First();
+            //    day = freeDay.Key;
+            //    isSuccess = true;
+            //    break;
+            //}
+
+            //if (isSuccess)
+            //{
+            //    AddLecture(name, audience, lecturer, day, time);
+            //}
+            //else
+            //{
+            //    throw new Exception();
+            //}
         }
 
         private void AddLecture(string name, Group audience, Teacher lecturer, Days day, LectureTimes time)
@@ -105,6 +112,21 @@ namespace ScheduleFormer.Structures
                 _teacherSchedules.Add(teacherSchedule.Key, new TeacherSchedule(teacherSchedule.Value.Lecturer));
             }
         }
+
+        private Days SelectDay(Dictionary<Days, Day> days1, Dictionary<Days, Day> days2)
+        {
+            var freeDays = days1.Where(a => days2.ContainsKey(a.Key)).Select(a => a.Key)
+                .Where(a => days1[a].SpareFreeTime(days2[a]).Any());
+            var comparison = new Dictionary<(Day, Day), int>(); //days1 Day, days2 Day, 
+            foreach (var freeDay in freeDays)
+            {
+                comparison.Add((days1[freeDay],days2[freeDay]), Math.Min(days1[freeDay].FreeTimes.Count(), days2[freeDay].FreeTimes.Count()));
+            }
+
+            return comparison.FirstOrDefault(a => a.Value == comparison.Max(i => i.Value)).Key.Item1.Today;
+        }
+
+
 
         //public List<Lecture> GetGroupByDay(Group group, Days day)
         //{

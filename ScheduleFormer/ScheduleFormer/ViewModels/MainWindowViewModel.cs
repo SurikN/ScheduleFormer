@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using GalaSoft.MvvmLight.CommandWpf;
 using ScheduleFormer.Containers;
+using ScheduleFormer.Enums;
 using ScheduleFormer.Models;
 using ScheduleFormer.Structures;
 using ScheduleFormer.Views;
@@ -15,15 +16,37 @@ namespace ScheduleFormer.ViewModels
 {
     public class MainWindowViewModel
     {
+        #region Private fields
+        
         private GlobalSchedule _globalSchedule;
+
+        #endregion
+
+        #region Public properties
 
         public ObservableCollection<Teacher> Lecturers { get; set; }
 
         public ObservableCollection<Group> Audiences { get; set; }
 
+        #region Days
+
+        public ObservableCollection<Day> Monday { get; set; } = new ObservableCollection<Day>();
+
+        public ObservableCollection<Day> Tuesday { get; set; } = new ObservableCollection<Day>();
+
+        public ObservableCollection<Day> Wednesday { get; set; } = new ObservableCollection<Day>();
+
+        public ObservableCollection<Day> Thursday { get; set; } = new ObservableCollection<Day>();
+
+        public ObservableCollection<Day> Friday { get; set; } = new ObservableCollection<Day>();
+
+        #endregion
+
         public List<Lecture> Lectures { get; set; }
         
         public GlobalSchedule Schedule { get; set; }
+
+        #endregion
 
         public ICommand AddCommand => new RelayCommand(OnAddCommand, true);
 
@@ -64,6 +87,8 @@ namespace ScheduleFormer.ViewModels
 
                     tempLectures.RemoveAt(index);
                 }
+
+                UpdateDays();
             }
             catch
             {
@@ -76,6 +101,18 @@ namespace ScheduleFormer.ViewModels
             var view = new AddLecturesView();
             view.Show();
             Lectures = new List<Lecture>(LecturesStorageModel.Lectures);
+        }
+
+        private void UpdateDays()
+        {
+            foreach (var groupSchedule in _globalSchedule.GroupSchedules.Values)
+            {
+                Monday.Add(groupSchedule.Lectures[Days.Monday]);
+                Tuesday.Add(groupSchedule.Lectures[Days.Tuesday]);
+                Wednesday.Add(groupSchedule.Lectures[Days.Wednesday]);
+                Thursday.Add(groupSchedule.Lectures[Days.Thursday]);
+                Friday.Add(groupSchedule.Lectures[Days.Friday]);
+            }
         }
     }
 }
