@@ -1,0 +1,119 @@
+﻿<Window x:Class="ScheduleFormer.Views.AddLecturesView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ScheduleFormer.Views"
+        xmlns:vm="clr-namespace:ScheduleFormer.ViewModels"
+        mc:Ignorable="d"
+        Title="AddLecturesView" Height="300" Width="600">
+    <Window.DataContext>
+        <vm:AddLecturesViewModel/>
+    </Window.DataContext>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="170"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Name:"
+                       Margin="5"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Top"
+                       Grid.Row="0"/>
+            <TextBox Name="NameBox"
+                     Text="{Binding SelectedName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                     Margin="5"
+                     Grid.Row="1"/>
+            <TextBlock Text="Teacher:"
+                       Margin="5"
+                       Grid.Row="2"/>
+            <ComboBox Name="TeacherBox"
+                      Margin="5"
+                      ItemsSource="{Binding Lecturers}"
+                      Text="{Binding SelectedLecturer, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                      Grid.Row="3"
+                      IsEditable="True"/>
+            <TextBlock Text="Group:"
+                       Margin="5"
+                       Grid.Row="4"/>
+            <ComboBox Name="GroupBox"
+                      Margin="5"
+                      Grid.Row="5"
+                      IsEditable="True"
+                      ItemsSource="{Binding Audiences}"
+                      Text="{Binding SelectedAudience, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+            </ComboBox>
+            <TextBlock Text="Quantity (per week):"
+                       Margin="5"
+                       Grid.Row="6"/>
+            <TextBox Name="QuantityBox"
+                      Margin="5"
+                      Grid.Row="7"
+                      Text="{Binding SelectedQuantity, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+            <Button Name="AddButton"
+                    Margin="5"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    Width="Auto"
+                    Content="Add Lecture"
+                    Command="{Binding AddLectureCommand}"
+                    Grid.Row="8"/>
+        </Grid>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <DataGrid Name="LecturesGrid"
+                      ItemsSource="{Binding Lectures}"
+                      AutoGenerateColumns="False"
+                      Margin="5"
+                      VerticalAlignment="Stretch"
+                      Width="Auto"
+                      Grid.Row="0"
+                      CanUserAddRows="False"
+                      >
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}"
+                                        Width="120"/>
+                    <DataGridTextColumn Header="Lecturer" Binding="{Binding Lecturer}"
+                                        Width="150"/>
+                    <DataGridTextColumn Header="Audience" Binding="{Binding Audience}"
+                                        Width="120"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        FlowDirection="RightToLeft"
+                        VerticalAlignment="Bottom">
+                <Button Name="OkButton"
+                    Content ="Done"
+                    Command="{Binding OkCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, 
+                           AncestorType={x:Type Window}}}"
+                    Margin="5"
+                    VerticalAlignment="Bottom"
+                    HorizontalAlignment="Right"/>
+                <Button Name="RemoveButton"
+                    Content ="Remove Lecture"
+                    Command="{Binding RemoveLectureCommand}"
+                    Margin="5"
+                    VerticalAlignment="Bottom"
+                    HorizontalAlignment="Left"/>
+            </StackPanel>
+
+        </Grid>
+    </Grid>
+</Window>
