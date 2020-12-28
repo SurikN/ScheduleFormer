@@ -14,6 +14,8 @@ namespace ScheduleFormer.Containers
 
         public Dictionary<LectureTimes, Lecture> Lectures { get; set; } = new Dictionary<LectureTimes, Lecture>();
 
+        public Group Audience => Lectures.FirstOrDefault().Value.Audience;
+
         public IEnumerable<LectureTimes> FreeTimes
         {
             get

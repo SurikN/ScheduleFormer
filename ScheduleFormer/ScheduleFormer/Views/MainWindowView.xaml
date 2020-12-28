@@ -14,10 +14,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
-            <RowDefinition/>
-            <RowDefinition/>
-            <RowDefinition/>
-            <RowDefinition/>
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal"
                     Grid.Row="0">
@@ -30,8 +26,8 @@
                     Grid.Row="1"></Button>
         </StackPanel>
 
-        <!--<ListView Name="MondayView"
-                  Grid.Row="1"
-                  ItemsSource="{Binding Monday}"></ListView>-->
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding ScheduleDataTable}">
+        </DataGrid>
     </Grid>
 </Window>

@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Data;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using GalaSoft.MvvmLight.CommandWpf;
+using ScheduleFormer.Annotations;
 using ScheduleFormer.Containers;
 using ScheduleFormer.Enums;
 using ScheduleFormer.Models;
@@ -14,11 +18,13 @@ using ScheduleFormer.Views;
 
 namespace ScheduleFormer.ViewModels
 {
-    public class MainWindowViewModel
+    public class MainWindowViewModel : INotifyPropertyChanged
     {
         #region Private fields
-        
+
         private GlobalSchedule _globalSchedule;
+
+        private DataTable _scheduleDataTable = new DataTable();
 
         #endregion
 
@@ -30,20 +36,22 @@ namespace ScheduleFormer.ViewModels
 
         #region Days
 
-        public ObservableCollection<Day> Monday { get; set; } = new ObservableCollection<Day>();
+        public DataTable MondayTable { get; set; }
 
-        public ObservableCollection<Day> Tuesday { get; set; } = new ObservableCollection<Day>();
-
-        public ObservableCollection<Day> Wednesday { get; set; } = new ObservableCollection<Day>();
-
-        public ObservableCollection<Day> Thursday { get; set; } = new ObservableCollection<Day>();
-
-        public ObservableCollection<Day> Friday { get; set; } = new ObservableCollection<Day>();
+        public DataTable ScheduleDataTable
+        {
+            get => _scheduleDataTable;
+            set
+            {
+                _scheduleDataTable = value;
+                OnPropertyChanged();
+            }
+        }
 
         #endregion
 
-        public List<Lecture> Lectures { get; set; }
-        
+        public List<Lecture> _lectures { get; set; }
+
         public GlobalSchedule Schedule { get; set; }
 
         #endregion
@@ -88,7 +96,7 @@ namespace ScheduleFormer.ViewModels
                     tempLectures.RemoveAt(index);
                 }
 
-                UpdateDays();
+                FormDataTable();
             }
             catch
             {
@@ -100,19 +108,65 @@ namespace ScheduleFormer.ViewModels
         {
             var view = new AddLecturesView();
             view.Show();
-            Lectures = new List<Lecture>(LecturesStorageModel.Lectures);
+            _lectures = new List<Lecture>(LecturesStorageModel.Lectures);
         }
 
         private void UpdateDays()
         {
-            foreach (var groupSchedule in _globalSchedule.GroupSchedules.Values)
+
+        }
+
+        private void FormDataTable()
+        {
+            DataTable tempDT = new DataTable();
+            DataColumn column;
+            DataRow row;
+            foreach (var groupSchedule in _globalSchedule.GroupSchedules)
             {
-                Monday.Add(groupSchedule.Lectures[Days.Monday]);
-                Tuesday.Add(groupSchedule.Lectures[Days.Tuesday]);
-                Wednesday.Add(groupSchedule.Lectures[Days.Wednesday]);
-                Thursday.Add(groupSchedule.Lectures[Days.Thursday]);
-                Friday.Add(groupSchedule.Lectures[Days.Friday]);
+                column = new DataColumn()
+                {
+                    DataType = typeof(string),
+                    ColumnName = groupSchedule.Key
+                };
+                tempDT.Columns.Add(column);
             }
+
+            for (var i = 0; i < 40; i++)
+            {
+                row = tempDT.NewRow();
+                tempDT.Rows.Add(row);
+            }
+
+            try
+            {
+                foreach (var schedule in _globalSchedule.GroupSchedules)
+                {
+                    foreach (var day in schedule.Value.Lectures)
+                    {
+                        foreach (var lecture in day.Value.Lectures)
+                        {
+                            var mod1 = ((int) day.Key - 1) * 8;
+                            var mod2 = ((int) lecture.Key - 1);
+                            tempDT.Rows[mod1 + mod2][schedule.Key] =
+                                lecture.Value != null ? lecture.Value.ToString() : "-";
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                var k = e.Message;
+            }
+
+            ScheduleDataTable = tempDT;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

@@ -29,5 +29,10 @@ namespace ScheduleFormer.Containers
             return ((Lecture) obj).Name == Name && ((Lecture) obj).Lecturer == Lecturer &&
                    ((Lecture) obj).Audience == Audience;
         }
+
+        public override string ToString()
+        {
+            return $"{Name}\n{Lecturer}";
+        }
     }
 }
