@@ -19,6 +19,18 @@ namespace ScheduleFormer.Containers
 
         public LectureTimes LectureTime { get; set; }
 
+        public Lecture()
+        {
+
+        }
+
+        public Lecture(Lecture lecture)
+        {
+            Name = lecture.Name;
+            Audience = lecture.Audience;
+            Lecturer = lecture.Lecturer;
+        }
+
         public override bool Equals(object obj)
         {
             if (obj == null || obj.GetType() != typeof(Lecture))
@@ -26,8 +38,8 @@ namespace ScheduleFormer.Containers
                 return false;
             }
 
-            return ((Lecture) obj).Name == Name && ((Lecture) obj).Lecturer == Lecturer &&
-                   ((Lecture) obj).Audience == Audience;
+            return ((Lecture) obj).Name == Name && ((Lecture) obj).Lecturer.Equals(Lecturer) &&
+                   ((Lecture) obj).Audience.Equals(Audience);
         }
 
         public override string ToString()

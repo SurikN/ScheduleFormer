@@ -18,7 +18,15 @@ namespace ScheduleFormer.ViewModels
 {
     public class AddLecturesViewModel : INotifyPropertyChanged
     {
-        private List<Lecture> _lectures = new List<Lecture>();
+        private string _selectedLecturer, _selectedAudience, _selectedName, _selectedQuantity;
+
+        private Lecture _savedSelectedLecture;
+
+        private Lecture _selectedLecture;
+
+        private bool _isEditing = false;
+
+        private List<Lecture> _lectures;
 
         public ObservableCollection<Group> Audiences { get; set; } = new ObservableCollection<Group>();
 
@@ -26,21 +34,151 @@ namespace ScheduleFormer.ViewModels
 
         public ObservableCollection<Lecture> Lectures { get; set; } = new ObservableCollection<Lecture>();
 
-        public string SelectedName { get; set; }
+        public AddLecturesViewModel()
+        {
+            _lectures = new List<Lecture>(LecturesStorageModel.Lectures);
+            UpdateLists();
+            UpdateLectures();
+        }
 
-        public string SelectedAudience { get; set; }
+        public bool IsNotEditing
+        {
+            get => !_isEditing;
+            set => IsEditing = !value;
+        }
 
-        public string SelectedLecturer { get; set; }
+        public bool IsEditing
+        {
+            get => _isEditing;
+            set
+            {
+                _isEditing = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsNotEditing));
+            }
+        }
 
-        public string SelectedQuantity { get; set; }
+        public string SelectedName
+        {
+            get => _selectedName;
+            set
+            {
+                _selectedName = value;
+                OnPropertyChanged();
+            }
+        }
 
-        public Lecture SelectedLecture { get; set; }
+        public string SelectedAudience
+        {
+            get => _selectedAudience;
+            set
+            {
+                _selectedAudience = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string SelectedLecturer
+        {
+            get => _selectedLecturer;
+            set
+            {
+                _selectedLecturer = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string SelectedQuantity
+        {
+            get => _selectedQuantity;
+            set
+            {
+                _selectedQuantity = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public Lecture SelectedLecture
+        {
+            get => _selectedLecture;
+            set
+            {
+                _selectedLecture = value;
+                OnPropertyChanged();
+            }
+        }
 
         public ICommand AddLectureCommand => new RelayCommand(OnAddLectureCommand, true);
 
-        public ICommand RemoveLectureCommand => new RelayCommand(OnRemoveLectureCommand, CanRemoveLectureCommand);
+        public ICommand RemoveLectureCommand => new RelayCommand(OnRemoveLectureCommand, SelectedLecture != null);
 
-        public ICommand OkCommand => new GalaSoft.MvvmLight.CommandWpf.RelayCommand<Window>(OnOkCommand, true);
+        public ICommand OkCommand => new RelayCommand<Window>(OnOkCommand, true);
+
+        public ICommand EditCommand => new RelayCommand(OnEditCommand, SelectedLecture != null);
+
+        public ICommand ConfirmEditCommand => new RelayCommand(OnConfirmEditCommand, _isEditing);
+
+        public ICommand CancelEditCommand => new RelayCommand(OnCancelEditCommand, _isEditing);
+
+        private void OnConfirmEditCommand()
+        {
+            RemoveSelectedLecture();
+            OnAddLectureCommand();
+            //int diff;
+
+            ////Quantity alignment
+            //if ((diff = LecturesCount(_savedSelectedLecture) - int.Parse(SelectedQuantity)) > 0)
+            //{
+            //    for (var i = 0; i < diff; i++)
+            //    {
+            //        _lectures.Remove(_lectures.First(a=> a.Equals(_savedSelectedLecture)));
+            //    }
+            //}
+            //else
+            //{
+            //    for (var i = 0; i > diff; i--)
+            //    {
+            //        _lectures.Add(new Lecture(_savedSelectedLecture));
+            //    }
+            //}
+
+            ////Data alignment
+            //foreach (var lecture in _lectures)
+            //{
+            //    if (!lecture.Equals(_savedSelectedLecture)) continue;
+            //    lecture.Audience = new Group(SelectedAudience);
+            //    lecture.Lecturer = new Teacher(SelectedLecturer);
+            //    lecture.Name = SelectedName;
+            //}
+
+            //UpdateLists();
+            //UpdateLectures();
+            //IsNotEditing = true;
+        }
+
+        private void OnCancelEditCommand()
+        {
+            Clear();
+            IsNotEditing = true;
+        }
+
+        private int LecturesCount(Lecture lecture)
+        {
+            return _lectures.Count(a =>
+                a.Name == lecture.Name && a.Lecturer.ToString() == lecture.Lecturer.ToString() &&
+                a.Audience.ToString() == lecture.Audience.ToString());
+        }
+
+        private void OnEditCommand()
+        {
+            SelectedAudience = SelectedLecture.Audience.ToString();
+            SelectedLecturer = SelectedLecture.Lecturer.ToString();
+            SelectedName = SelectedLecture.Name;
+            SelectedQuantity = LecturesCount(SelectedLecture).ToString();
+
+            _savedSelectedLecture = SelectedLecture;
+            IsEditing = true;
+        }
 
         private void OnAddLectureCommand()
         {
@@ -68,15 +206,48 @@ namespace ScheduleFormer.ViewModels
             Clear();
         }
 
+        private void UpdateLectures()
+        {
+            Lectures.Clear();
+            foreach (var lecture in _lectures)
+            {
+                if (!Lectures.Any(a=> a.Equals(lecture)))
+                {
+                    Lectures.Add(lecture);
+                }
+            }
+        }
+
         private void OnRemoveLectureCommand()
         {
-            while (Lectures.Any(a => a.Equals(SelectedLecture)))
+            if (MessageBox.Show("Are you sure you want to delete lectures?", "Confirm action", MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) == MessageBoxResult.No)
             {
-                Lectures.Remove(SelectedLecture);
+                return;
             }
 
+            _savedSelectedLecture = SelectedLecture;
+            RemoveSelectedLecture();
+        }
+
+        public void RemoveSelectedLecture()
+        {
+            var toDelete = new List<Lecture>();
+            foreach (var lecture in _lectures)
+            {
+                if (lecture.Equals(_savedSelectedLecture))
+                {
+                    toDelete.Add(lecture);
+                }
+            }
+
+            foreach (var lecture in toDelete)
+            {
+                _lectures.Remove(lecture);
+            }
+            UpdateLectures();
+            OnPropertyChanged(nameof(Lectures));
             SelectedLecture = null;
-            OnPropertyChanged(nameof(SelectedLecture));
         }
 
         private void OnOkCommand(Window obj)
@@ -118,11 +289,6 @@ namespace ScheduleFormer.ViewModels
             SelectedLecturer = string.Empty;
             SelectedName = string.Empty;
             SelectedQuantity = string.Empty;
-
-            OnPropertyChanged(nameof(SelectedAudience));
-            OnPropertyChanged(nameof(SelectedLecturer));
-            OnPropertyChanged(nameof(SelectedName));
-            OnPropertyChanged(nameof(SelectedQuantity));
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

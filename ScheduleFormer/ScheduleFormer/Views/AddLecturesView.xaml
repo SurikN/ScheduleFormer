@@ -6,10 +6,13 @@
         xmlns:local="clr-namespace:ScheduleFormer.Views"
         xmlns:vm="clr-namespace:ScheduleFormer.ViewModels"
         mc:Ignorable="d"
-        Title="AddLecturesView" Height="300" Width="600">
+        Title="Add/Edit lectures" Height="300" Width="600">
     <Window.DataContext>
         <vm:AddLecturesViewModel/>
     </Window.DataContext>
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="170"/>
@@ -62,14 +65,33 @@
                       Margin="5"
                       Grid.Row="7"
                       Text="{Binding SelectedQuantity, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
-            <Button Name="AddButton"
-                    Margin="5"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Bottom"
-                    Width="Auto"
-                    Content="Add Lecture"
-                    Command="{Binding AddLectureCommand}"
-                    Grid.Row="8"/>
+            <StackPanel Grid.Row="8"
+                        Orientation="Horizontal">
+                <Button Name="AddButton"
+                        Margin="5"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Width="Auto"
+                        Content="Add Lecture"
+                        Command="{Binding AddLectureCommand}"
+                        Visibility="{Binding IsNotEditing, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Button Name="ConfirmEditButton"
+                        Margin="5"
+                        Content="Confirm edit"
+                        Width="Auto"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Command="{Binding ConfirmEditCommand}"
+                        Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"></Button>
+                <Button Name="CancelEdit"
+                        Margin="5"
+                        Content="Cancel edit"
+                        Width="Auto"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Command="{Binding CancelEditCommand}"
+                        Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"></Button>
+            </StackPanel>
         </Grid>
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
@@ -84,7 +106,7 @@
                       Width="Auto"
                       Grid.Row="0"
                       CanUserAddRows="False"
-                      >
+                      SelectedItem="{Binding SelectedLecture, Mode=OneWayToSource}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}"
                                         Width="120"/>
@@ -112,6 +134,12 @@
                     Margin="5"
                     VerticalAlignment="Bottom"
                     HorizontalAlignment="Left"/>
+                <Button Name="EditButton"
+                        Content="Edit Lecture"
+                        Margin="5"
+                        VerticalAlignment="Bottom"
+                        HorizontalAlignment="Left"
+                        Command="{Binding EditCommand}"></Button>
             </StackPanel>
 
         </Grid>

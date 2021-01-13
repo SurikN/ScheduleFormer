@@ -17,16 +17,29 @@
         </Grid.RowDefinitions>
         <StackPanel Orientation="Horizontal"
                     Grid.Row="0">
-            <Button Content="Add"
+            <Button Content="Edit"
                     Margin="5"
-                    Command="{Binding AddCommand}"></Button>
+                    Command="{Binding EditCommand}"/>
+            <Button Content="Clear"
+                    Margin="5"
+                    Command="{Binding ClearCommand}"/>
             <Button Content="Create"
                     Margin="5"
-                    Command="{Binding CreateScheduleCommand}"
-                    Grid.Row="1"></Button>
+                    Command="{Binding CreateScheduleCommand}"/>
+            <Button Content="Export..."
+                    Margin="5"
+                    Command="{Binding ExportCommand}"></Button>
         </StackPanel>
 
         <DataGrid Grid.Row="1"
+                  Height="Auto"
+                  Width="Auto"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserReorderColumns="True"
+                  CanUserSortColumns="False"
+                  CanUserResizeColumns="True"
+                  CanUserResizeRows="True"
                   ItemsSource="{Binding ScheduleDataTable}">
         </DataGrid>
     </Grid>

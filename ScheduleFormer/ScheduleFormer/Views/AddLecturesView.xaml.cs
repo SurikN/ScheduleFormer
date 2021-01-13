@@ -19,6 +19,12 @@ namespace ScheduleFormer.Views
     /// </summary>
     public partial class AddLecturesView : Window
     {
+        public bool IsClosing
+        {
+            get;
+            set;
+        } = false;
+
         public AddLecturesView()
         {
             InitializeComponent();
