@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using GalaSoft.MvvmLight.CommandWpf;
@@ -17,6 +15,8 @@ using ScheduleFormer.Enums;
 using ScheduleFormer.Models;
 using ScheduleFormer.Structures;
 using ScheduleFormer.Views;
+using Spire.Xls;
+using Group = ScheduleFormer.Containers.Group;
 
 namespace ScheduleFormer.ViewModels
 {
@@ -24,15 +24,21 @@ namespace ScheduleFormer.ViewModels
     {
         #region Private fields
 
-        private AddLecturesView _addLecturesView = null;
+        private AddLecturesView _addLecturesView = new AddLecturesView();
 
         private GlobalSchedule _globalSchedule;
 
         private DataTable _scheduleDataTable = new DataTable();
 
         private bool _isScheduleCreated = false;
+        private LecturesStorageModel _lecturesStorageModel = LecturesStorageModel.GetInstance();
 
         #endregion
+
+        public MainWindowViewModel()
+        {
+            _globalSchedule = new GlobalSchedule(_lecturesStorageModel);
+        }
 
         #region Public properties
 
@@ -41,8 +47,6 @@ namespace ScheduleFormer.ViewModels
         public ObservableCollection<Group> Audiences { get; set; }
 
         #region Days
-
-        public DataTable MondayTable { get; set; }
 
         public DataTable ScheduleDataTable
         {
@@ -68,17 +72,21 @@ namespace ScheduleFormer.ViewModels
 
         public ICommand ExportCommand => new RelayCommand(OnExportCommand, _isScheduleCreated);
 
+        public ICommand ImportCommand => new RelayCommand(OnImportCommand, _isScheduleCreated);
+
         public ICommand ClearCommand => new RelayCommand(OnClearCommand, true);
 
         private void OnClearCommand()
         {
-            if (MessageBox.Show("Are you sure you want to delete all schedule?", "Confirm action",
+            if (MessageBox.Show("Ви впевнені, що хочете видалити весь розклад? Ця дія видалить усі додані пари. Цю дію не можна відмінити.", "Підтвердіть дію",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
             {
                 return;
             }
 
-            _lectures = new List<Lecture>(LecturesStorageModel.Lectures);
+            _lecturesStorageModel.Lectures.Clear();
+
+            _lectures = new List<Lecture>(_lecturesStorageModel.Lectures);
             _scheduleDataTable.Clear();
             _addLecturesView = null;
         }
@@ -103,25 +111,12 @@ namespace ScheduleFormer.ViewModels
         {
             try
             {
-                _isScheduleCreated = false;
-                var tempLectures = new List<Lecture>(LecturesStorageModel.Lectures);
-                _globalSchedule =
-                    new GlobalSchedule(LecturesStorageModel.UniqueGroups, LecturesStorageModel.UniqueTeachers);
-
-                Lecture tempLecture;
-                var rng = new Random();
-                while (tempLectures.Count > 0)
-                {
-                    var index = rng.Next(0, tempLectures.Count);
-                    tempLecture = tempLectures.ElementAt(index);
-
-                    _globalSchedule.AddLecture(tempLecture.Name, tempLecture.Audience, tempLecture.Lecturer);
-
-                    tempLectures.RemoveAt(index);
-                }
+                var counter = CreateSchedule();
 
                 FormDataTable();
                 _isScheduleCreated = true;
+
+                MessageBox.Show(counter.ToString(), "Operations", MessageBoxButton.OK);
             }
             catch (Exception e)
             {
@@ -129,11 +124,17 @@ namespace ScheduleFormer.ViewModels
             }
         }
 
+        private int CreateSchedule()
+        {
+            _isScheduleCreated = false;
+            return
+            _globalSchedule.CreateScheduleOnLecture();
+        }
+
         private void OnEditCommand()
         {
             _addLecturesView = new AddLecturesView();
             _addLecturesView.Show();
-            //_lectures = new List<Lecture>(LecturesStorageModel.Lectures);
         }
 
         private void OnExportCommand()
@@ -151,24 +152,83 @@ namespace ScheduleFormer.ViewModels
                     DefaultExt = ".csv",
                 };
                 if (saveFileDialog.ShowDialog() != true) return;
+
+                Workbook wb = new Workbook();
+                Worksheet sheet = wb.Worksheets[0];
+
+                sheet.Name = "Schedule";
+
                 var dataTable = _scheduleDataTable;
 
-                var lines = new List<string>();
+                var i = 1;
+                var c = 'A';
+                var s = string.Empty;
 
                 string[] columnNames = dataTable.Columns
                     .Cast<DataColumn>()
                     .Select(column => column.ColumnName)
                     .ToArray();
 
-                var header = string.Join(",", columnNames.Select(name => $"\"{name.Replace("\n", ": ")}\""));
-                lines.Add(header);
+                foreach (var columnName in columnNames)
+                {
+                    var columnIndex = s + c;
+                    var rowIndex = i;
+                    sheet.Range[columnIndex + rowIndex].Text = columnName;
+                    if (c < 'Z')
+                    {
+                        c++;
+                    }
+                    else
+                    {
+                        s = "A";
+                        c = 'A';
+                    }
+                }
 
-                var valueLines = dataTable.AsEnumerable()
-                    .Select(row => string.Join(",", row.ItemArray.Select(val => $"\"{val.ToString().Replace("\n", ": ") }\"")));
+                s = string.Empty;
+                c = 'A';
+                i = 2;
 
-                lines.AddRange(valueLines);
+                var l = 'A';
 
-                File.WriteAllLines(saveFileDialog.FileName, lines, Encoding.Unicode);
+                foreach (DataRow dataRow in _scheduleDataTable.Rows)
+                {
+                    var rowIndex = i;
+                    foreach (var columnName in columnNames)
+                    {
+                        var columnIndex = s + c;
+                        sheet[columnIndex + rowIndex].Text = dataRow[columnName].ToString();
+                        if (c < 'Z')
+                        {
+                            c++;
+                        }
+                        else
+                        {
+                            s = l.ToString();
+                            l++;
+                            c = 'A';
+                        }
+                    }
+
+                    s = string.Empty;
+                    l = 'A';
+                    c = 'A';
+                    i++;
+                }
+
+                var toDelete = new List<Worksheet>();
+
+                for (var j = 1; j < wb.Worksheets.Count; j++)
+                {
+                    toDelete.Add(wb.Worksheets[j]);
+                }
+
+                foreach (var worksheet in toDelete)
+                {
+                    worksheet.Remove();
+                }
+
+                wb.SaveToFile(saveFileDialog.FileName);
             }
             catch
             {
@@ -177,13 +237,50 @@ namespace ScheduleFormer.ViewModels
             }
         }
 
+        private void OnImportCommand()
+        {
+            var openFileDialog = new OpenFileDialog()
+            {
+                DefaultExt = ".xlsx"
+            };
+            if (openFileDialog.ShowDialog() != true) return;
+
+            var path = openFileDialog.FileName;
+
+            var wb = new Workbook();
+
+            wb.LoadFromFile(path);
+            var sheet = wb.Worksheets[0];
+            var lectures = ExportTable(sheet);
+            
+            _lecturesStorageModel.CombinedLectures = new List<CombinedLecture>(lectures);
+        }
+
+        private List<CombinedLecture> ExportTable(Worksheet sheet)
+        {
+            var result = new List<CombinedLecture>();
+            foreach (var sheetColumn in sheet.Columns)
+            {
+                var lecture = new Lecture
+                {
+                    Audience = new Group(sheetColumn.CellList[0].Text),
+                    Name = sheetColumn.CellList[1].Text,
+                    Lecturer = new Teacher(sheetColumn.CellList[3].Text)
+                };
+                result.Add(new CombinedLecture(lecture, (int)sheetColumn.CellList[2].NumberValue));
+            }
+
+            return result;
+        }
+
+
         private void FormDataTable()
         {
             DataTable tempDT = new DataTable();
             tempDT.Columns.Add(new DataColumn()
             {
                 DataType = typeof(string),
-                ColumnName = "Day of week"
+                ColumnName = "День тижня"
             });
             DataColumn column;
             DataRow row;
@@ -209,10 +306,28 @@ namespace ScheduleFormer.ViewModels
                 foreach (Days day in typeof(Days).GetEnumValues())
                 {
                     var mod1 = 8 * ((int)day - 1);
-                    tempDT.Rows[mod1]["Day of week"] = day;
+                    switch (day)
+                    {
+                        case Days.Monday:
+                            tempDT.Rows[mod1]["День тижня"] = "Понеділок";
+                            break;
+                        case Days.Tuesday:
+                            tempDT.Rows[mod1]["День тижня"] = "Вівторок";
+                            break;
+                        case Days.Wednesday:
+                            tempDT.Rows[mod1]["День тижня"] = "Середа";
+                            break;
+                        case Days.Thursday:
+                            tempDT.Rows[mod1]["День тижня"] = "Четвер";
+                            break;
+                        case Days.Friday:
+                            tempDT.Rows[mod1]["День тижня"] = "П'ятниця";
+                            break;
+                    }
+                    //tempDT.Rows[mod1]["День тижня"] = day;
                     foreach (LectureTimes lectureTime in typeof(LectureTimes).GetEnumValues())
                     {
-                        tempDT.Rows[mod1 + (int)lectureTime]["Day of week"] = (int)lectureTime;
+                        tempDT.Rows[mod1 + (int)lectureTime]["День тижня"] = (int)lectureTime;
                     }
                 }
                 foreach (var schedule in _globalSchedule.GroupSchedules)

@@ -2,11 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.ComponentModel.Design;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using GalaSoft.MvvmLight.Command;
@@ -28,17 +25,51 @@ namespace ScheduleFormer.ViewModels
 
         private List<Lecture> _lectures;
 
+        private LecturesStorageModel _lecturesStorageModel = LecturesStorageModel.GetInstance();
+
         public ObservableCollection<Group> Audiences { get; set; } = new ObservableCollection<Group>();
 
         public ObservableCollection<Teacher> Lecturers { get; set; } = new ObservableCollection<Teacher>();
 
-        public ObservableCollection<Lecture> Lectures { get; set; } = new ObservableCollection<Lecture>();
+        public ObservableCollection<CombinedLecture> Lectures { get; set; } = new ObservableCollection<CombinedLecture>();
 
         public AddLecturesViewModel()
         {
-            _lectures = new List<Lecture>(LecturesStorageModel.Lectures);
+            foreach (var uniqueGroup in _lecturesStorageModel.UniqueGroups)
+            {
+                Audiences.Add(uniqueGroup);
+            }
+
+            foreach (var uniqueTeacher in _lecturesStorageModel.UniqueTeachers)
+            {
+                Lecturers.Add(uniqueTeacher);
+            }
+
+            foreach (var combinedLecture in _lecturesStorageModel.CombinedLectures)
+            {
+                Lectures.Add(combinedLecture);
+            }
+            _lectures = new List<Lecture>(_lecturesStorageModel.Lectures);
+
+            if (_lecturesStorageModel.CombinedLectures != null && _lecturesStorageModel.CombinedLectures.Count > 0)
+            {
+                FillCombinedLectures();
+            }
+
             UpdateLists();
             UpdateLectures();
+        }
+
+        private void FillCombinedLectures()
+        {
+            foreach (var combinedLecture in _lecturesStorageModel.CombinedLectures)
+            {
+                SelectedName = combinedLecture.Name;
+                SelectedAudience = combinedLecture.Audience.Name;
+                SelectedLecturer = combinedLecture.Lecturer.Name;
+                SelectedQuantity = combinedLecture.Quantity.ToString();
+                OnAddLectureCommand();
+            }
         }
 
         public bool IsNotEditing
@@ -124,36 +155,6 @@ namespace ScheduleFormer.ViewModels
         {
             RemoveSelectedLecture();
             OnAddLectureCommand();
-            //int diff;
-
-            ////Quantity alignment
-            //if ((diff = LecturesCount(_savedSelectedLecture) - int.Parse(SelectedQuantity)) > 0)
-            //{
-            //    for (var i = 0; i < diff; i++)
-            //    {
-            //        _lectures.Remove(_lectures.First(a=> a.Equals(_savedSelectedLecture)));
-            //    }
-            //}
-            //else
-            //{
-            //    for (var i = 0; i > diff; i--)
-            //    {
-            //        _lectures.Add(new Lecture(_savedSelectedLecture));
-            //    }
-            //}
-
-            ////Data alignment
-            //foreach (var lecture in _lectures)
-            //{
-            //    if (!lecture.Equals(_savedSelectedLecture)) continue;
-            //    lecture.Audience = new Group(SelectedAudience);
-            //    lecture.Lecturer = new Teacher(SelectedLecturer);
-            //    lecture.Name = SelectedName;
-            //}
-
-            //UpdateLists();
-            //UpdateLectures();
-            //IsNotEditing = true;
         }
 
         private void OnCancelEditCommand()
@@ -187,21 +188,33 @@ namespace ScheduleFormer.ViewModels
             {
                 throw new ApplicationException();
             }
-            Lectures.Add(new Lecture
+
+            if (Lecturers.All(a => a.Name != SelectedLecturer))
             {
-                Audience = new Group(SelectedAudience),
-                Lecturer = new Teacher(SelectedLecturer),
-                Name = SelectedName
-            });
+                Lecturers.Add(new Teacher(SelectedLecturer));
+            }
+
+            if (Audiences.All(a => a.Name != SelectedAudience))
+            {
+                Audiences.Add(new Group(SelectedAudience));
+            }
+
             for (var i = 0; i < quantity; i++)
             {
                 _lectures.Add(new Lecture
                 {
-                    Audience = new Group(SelectedAudience),
-                    Lecturer = new Teacher(SelectedLecturer),
+                    Audience = Audiences.First(a => a.Name == SelectedAudience),
+                    Lecturer = Lecturers.First(a => a.Name == SelectedLecturer),
                     Name = SelectedName
                 });
             }
+
+            Lectures.Add(new CombinedLecture(new Lecture()
+            {
+                Audience = Audiences.First(a => a.Name == SelectedAudience),
+                Lecturer = Lecturers.First(a => a.Name == SelectedLecturer),
+                Name = SelectedName
+            }, quantity));
 
             Clear();
         }
@@ -211,9 +224,9 @@ namespace ScheduleFormer.ViewModels
             Lectures.Clear();
             foreach (var lecture in _lectures)
             {
-                if (!Lectures.Any(a=> a.Equals(lecture)))
+                if (!Lectures.Any(a => a.Equals(lecture)))
                 {
-                    Lectures.Add(lecture);
+                    Lectures.Add(new CombinedLecture(lecture, _lectures.Count(a => a.Equals(lecture))));
                 }
             }
         }
@@ -233,11 +246,11 @@ namespace ScheduleFormer.ViewModels
         public void RemoveSelectedLecture()
         {
             var toDelete = new List<Lecture>();
-            foreach (var lecture in _lectures)
+            for (int i = 0; i < _lectures.Count; i++)
             {
-                if (lecture.Equals(_savedSelectedLecture))
+                if (_lectures[i].Name == _savedSelectedLecture.Name && _lectures[i].Audience.Equals(_savedSelectedLecture.Audience) && _lectures[i].Lecturer.Equals(_savedSelectedLecture.Lecturer))
                 {
-                    toDelete.Add(lecture);
+                    toDelete.Add(_lectures[i]);
                 }
             }
 
@@ -245,17 +258,29 @@ namespace ScheduleFormer.ViewModels
             {
                 _lectures.Remove(lecture);
             }
+
+            var tempLectures = new List<CombinedLecture>(Lectures);
+
+            foreach (var lecture in tempLectures)
+            {
+                if (lecture.Name == _savedSelectedLecture.Name && lecture.Audience == _savedSelectedLecture.Audience && lecture.Lecturer == _savedSelectedLecture.Lecturer)
+                {
+                    Lectures.Remove(lecture);
+                }
+            }
+
             UpdateLectures();
             OnPropertyChanged(nameof(Lectures));
+            IsNotEditing = true;
             SelectedLecture = null;
         }
 
         private void OnOkCommand(Window obj)
         {
-            LecturesStorageModel.Lectures.Clear();
+            _lecturesStorageModel.Lectures.Clear();
             foreach (var lecture in _lectures)
             {
-                LecturesStorageModel.Add(lecture);
+                _lecturesStorageModel.Add(lecture);
             }
             ((Window)obj).Close();
         }

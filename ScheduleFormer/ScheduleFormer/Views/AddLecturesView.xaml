@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:ScheduleFormer.Views"
         xmlns:vm="clr-namespace:ScheduleFormer.ViewModels"
         mc:Ignorable="d"
-        Title="Add/Edit lectures" Height="300" Width="600">
+        Title="Редагування розкладу" Height="300" Width="655" MinHeight="300" MinWidth="500">
     <Window.DataContext>
         <vm:AddLecturesViewModel/>
     </Window.DataContext>
@@ -30,7 +30,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Text="Name:"
+            <TextBlock Text="Назва предмету:"
                        Margin="5"
                        HorizontalAlignment="Left"
                        VerticalAlignment="Top"
@@ -39,7 +39,7 @@
                      Text="{Binding SelectedName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                      Margin="5"
                      Grid.Row="1"/>
-            <TextBlock Text="Teacher:"
+            <TextBlock Text="Викладач:"
                        Margin="5"
                        Grid.Row="2"/>
             <ComboBox Name="TeacherBox"
@@ -48,7 +48,7 @@
                       Text="{Binding SelectedLecturer, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                       Grid.Row="3"
                       IsEditable="True"/>
-            <TextBlock Text="Group:"
+            <TextBlock Text="Група:"
                        Margin="5"
                        Grid.Row="4"/>
             <ComboBox Name="GroupBox"
@@ -58,12 +58,13 @@
                       ItemsSource="{Binding Audiences}"
                       Text="{Binding SelectedAudience, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
             </ComboBox>
-            <TextBlock Text="Quantity (per week):"
+            <TextBlock Text="Кількість (на тиждень):"
                        Margin="5"
                        Grid.Row="6"/>
             <TextBox Name="QuantityBox"
                       Margin="5"
                       Grid.Row="7"
+                      PreviewTextInput="NumberValidationTextBox"
                       Text="{Binding SelectedQuantity, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
             <StackPanel Grid.Row="8"
                         Orientation="Horizontal">
@@ -72,12 +73,12 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Bottom"
                         Width="Auto"
-                        Content="Add Lecture"
+                        Content="Додати"
                         Command="{Binding AddLectureCommand}"
                         Visibility="{Binding IsNotEditing, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <Button Name="ConfirmEditButton"
                         Margin="5"
-                        Content="Confirm edit"
+                        Content="Підтвердити"
                         Width="Auto"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Bottom"
@@ -85,7 +86,7 @@
                         Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"></Button>
                 <Button Name="CancelEdit"
                         Margin="5"
-                        Content="Cancel edit"
+                        Content="Відмінити"
                         Width="Auto"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Bottom"
@@ -103,25 +104,33 @@
                       AutoGenerateColumns="False"
                       Margin="5"
                       VerticalAlignment="Stretch"
+                      Height="Auto"
                       Width="Auto"
                       Grid.Row="0"
                       CanUserAddRows="False"
+                      MaxHeight="230"
+                      ScrollViewer.CanContentScroll="True" 
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                       SelectedItem="{Binding SelectedLecture, Mode=OneWayToSource}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}"
+                    <DataGridTextColumn Header="Назва предмету" Binding="{Binding Name}"
                                         Width="120"/>
-                    <DataGridTextColumn Header="Lecturer" Binding="{Binding Lecturer}"
+                    <DataGridTextColumn Header="Викладач" Binding="{Binding Lecturer}"
                                         Width="150"/>
-                    <DataGridTextColumn Header="Audience" Binding="{Binding Audience}"
+                    <DataGridTextColumn Header="Група" Binding="{Binding Audience}"
                                         Width="120"/>
+                    <DataGridTextColumn Header="Кількість" Binding="{Binding Quantity}"
+                                        Width="60"/>
                 </DataGrid.Columns>
             </DataGrid>
             <StackPanel Grid.Row="1"
                         Orientation="Horizontal"
                         FlowDirection="RightToLeft"
-                        VerticalAlignment="Bottom">
+                        VerticalAlignment="Bottom"
+                        HorizontalAlignment="Right"
+                        MinWidth="50">
                 <Button Name="OkButton"
-                    Content ="Done"
+                    Content ="Готово"
                     Command="{Binding OkCommand}"
                     CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, 
                            AncestorType={x:Type Window}}}"
@@ -129,13 +138,13 @@
                     VerticalAlignment="Bottom"
                     HorizontalAlignment="Right"/>
                 <Button Name="RemoveButton"
-                    Content ="Remove Lecture"
+                    Content ="Видалити"
                     Command="{Binding RemoveLectureCommand}"
                     Margin="5"
                     VerticalAlignment="Bottom"
                     HorizontalAlignment="Left"/>
                 <Button Name="EditButton"
-                        Content="Edit Lecture"
+                        Content="Редагувати"
                         Margin="5"
                         VerticalAlignment="Bottom"
                         HorizontalAlignment="Left"

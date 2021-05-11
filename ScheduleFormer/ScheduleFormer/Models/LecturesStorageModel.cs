@@ -1,22 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using ScheduleFormer.Containers;
-using ScheduleFormer.Structures;
 
 namespace ScheduleFormer.Models
 {
-    public static class LecturesStorageModel
+    public class LecturesStorageModel
     {
-        public static List<Lecture> Lectures { get; } = new List<Lecture>();
+        private static LecturesStorageModel _instance;
 
-        public static List<Group> UniqueGroups { get; } = new List<Group>();
+        private LecturesStorageModel()
+        {
 
-        public static List<Teacher> UniqueTeachers { get; } = new List<Teacher>();
+        }
 
-        public static void Add(Lecture lecture)
+        public static LecturesStorageModel GetInstance()
+        {
+            return _instance ?? (_instance = new LecturesStorageModel());
+        }
+
+        public List<Lecture> Lectures { get; } = new List<Lecture>();
+
+        public List<Group> UniqueGroups { get; } = new List<Group>();
+
+        public List<Teacher> UniqueTeachers { get; } = new List<Teacher>();
+
+        public List<CombinedLecture> CombinedLectures { get; set; } = new List<CombinedLecture>();
+
+        public void Add(Lecture lecture)
         {
             Lectures.Add(lecture);
             if (!UniqueGroups.Contains(lecture.Audience))

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Input;
 using ScheduleFormer.ViewModels;
 
 namespace ScheduleFormer.Views
@@ -12,6 +14,12 @@ namespace ScheduleFormer.Views
         public MainWindowView()
         {
             InitializeComponent();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            Application.Current.Shutdown();
         }
     }
 }
